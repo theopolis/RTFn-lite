@@ -1,0 +1,12 @@
+INSTALL / RUN
+
+Download Etherpad-lite to a directory that RTFn will have read/write access:
+$ git clone https://github.com/Pita/etherpad-lite.git etherpad-lite
+
+Install Python/Cherrypy, e.g.:
+$ apt-get install python-cherrypy 
+
+Configure settings.json (copy settings.json.template to settings.json), 
+by default you only need to change the "password" setting.
+
+$ python ./rlite.py
