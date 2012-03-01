@@ -1,7 +1,8 @@
 .DS_Store
 .*project*
 .settings
-
+*.pyc
+var/*
 settings.json
 etherpad-lite
 data.db
