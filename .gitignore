@@ -1,0 +1,7 @@
+.DS_Store
+.*project*
+.settings
+
+settings.json
+etherpad-lite
+data.db

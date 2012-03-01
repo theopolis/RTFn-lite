@@ -1,0 +1,21 @@
+{
+  "ip": "0.0.0.0",
+  "port": 9000,
+  "password": "change_admin_password",
+
+  "etherpad-dir": "etherpad-lite",
+  "etherpad": {
+    "port" : 9001,
+    "dbType" : "dirty",
+    "dbSettings" : {
+      "filename" : "../var/dirty.db"
+    },
+    "dbType1" : "mysql",
+    "dbSettings1" : {
+      "user"    : "root", 
+      "host"    : "localhost", 
+      "password": "", 
+      "database": "store"
+    }
+  }
+}

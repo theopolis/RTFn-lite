@@ -1,0 +1,15 @@
+{
+  "ip": "0.0.0.0",
+  "port" : 9001,
+  "dbType" : "dirty",
+  "dbSettings" : {
+                   "filename" : "../var/dirty.db"
+                 },
+  "defaultPadText" : "Start typing!",
+  "requireSession" : false,
+  "editOnly" : false,
+  "minify" : true,
+  "abiword" : null,
+  "httpAuth" : "USERNAME:PASSWORD",
+  "loglevel": "INFO"
+}

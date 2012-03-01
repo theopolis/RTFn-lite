@@ -9,4 +9,24 @@ $ apt-get install python-cherrypy
 Configure settings.json (copy settings.json.template to settings.json), 
 by default you only need to change the "password" setting.
 
+Then use RLITE or RLITE-SIMPLE
+
+RLITE-SIMPLE
+
+rLite Simple is a very basic layout for your pads. It does not use the Etherpad
+Lite API, but instead just scrapes the dirty DB flat file, while maintaining its
+own dirty DB for naming/labeling. 
+
+Configure your HOST in ./rlite-simple.py, and the httpAuth USERNAME:PASSWORD
+
+Copy the settings.json.simple to ./etherpad-lite/ (assuming you installed Etherpad
+Lite using the INSTALL / RUN directions. Then run Etherpad Lite
+
+$ nohup ./etherpad-lite/bin/run.sh
+$ python ./rlite-simple.py
+
+Navigate to http://"your host ip":9000
+
+RLITE
+
 $ python ./rlite.py
