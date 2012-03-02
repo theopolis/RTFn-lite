@@ -8,22 +8,6 @@ import cherrypy
 
 SESSION_KEY = '_rtfn_username'
 
-def check_credentials(username, password):
-    """Verifies credentials for username and password.
-    Returns None on success or a string describing the error on failure"""
-    # Adapt to your needs
-    if username in ('joe', 'steve') and password == 'secret':
-        return None
-    else:
-        return u"Incorrect username or password."
-    
-    # An example implementation which uses an ORM could be:
-    # u = User.get(username)
-    # if u is None:
-    #     return u"Username %s is unknown to me." % username
-    # if u.password != md5.new(password).hexdigest():
-    #     return u"Incorrect password"
-
 def check_auth(*args, **kwargs):
     """A tool that looks in config for 'auth.require'. If found and it
     is not None, a login is required and the entry is evaluated as a list of
@@ -54,23 +38,6 @@ def require(*conditions):
         return f
     return decorate
 
-
-# Conditions are callables that return True
-# if the user fulfills the conditions they define, False otherwise
-#
-# They can access the current username as cherrypy.request.login
-#
-# Define those at will however suits the application.
-
-def member_of(groupname):
-    def check():
-        # replace with actual check if <username> is in <groupname>
-        return cherrypy.request.login == 'joe' and groupname == 'admin'
-    return check
-
-def name_is(reqd_username):
-    return lambda: reqd_username == cherrypy.request.login
-
 # These might be handy
 
 def any_of(*conditions):
@@ -93,10 +60,27 @@ def all_of(*conditions):
         return True
     return check
 
+def valid_user():
+    return lambda: not cherrypy.request.login == None
 
 # Controller to provide login and logout actions
 
 class AuthController(object):
+    
+    def check_credentials(self, username, key):
+        """Verifies credentials for username and password.
+        Returns None on success or a string describing the error on failure"""
+        # Adapt to your needs
+        if username in ('joe', 'steve') and key == 'secret':
+            return None
+        else:
+            return u"Incorrect username or password."
+    # An example implementation which uses an ORM could be:
+    # u = User.get(username)
+    # if u is None:
+    #     return u"Username %s is unknown to me." % username
+    # if u.password != md5.new(password).hexdigest():
+    #     return u"Incorrect password"
     
     def on_login(self, username):
         """Called on successful login"""
@@ -119,7 +103,7 @@ class AuthController(object):
         if username is None or password is None:
             return self.get_loginform("", from_page=from_page)
         
-        error_msg = check_credentials(username, password)
+        error_msg = self.check_credentials(username, password)
         if error_msg:
             return self.get_loginform(username, error_msg, from_page)
         else:

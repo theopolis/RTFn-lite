@@ -1,13 +1,17 @@
 import os, json, sys
+from rlite.db import DB
+from rlite.auth import AuthController, require, valid_user
+
+import cherrypy
 
 MANDATORY = {
-               "defaultPadText" : "",
-               "requireSession" : "true",
-               "editOnly" : "false",
-               "minify" : "true",
-               "abiword" : "null",
-               #"httpAuth" : "",
-               "loglevel": "WARN"
+    "defaultPadText" : "",
+    "requireSession" : "true",
+    "editOnly" : "false",
+    "minify" : "true",
+    "abiword" : "null",
+    #"httpAuth" : "",
+    "loglevel": "WARN"
 }
 
 def error(s):
@@ -15,6 +19,10 @@ def error(s):
     exit(1)
 
 class RTFn(object):
+    def __init__(self, db):
+        self.__db = db
+        self.read_settings()
+        
     def read_settings(self):
         global MANDATORY
         settings = {}
@@ -60,24 +68,37 @@ class RTFn(object):
         print self.__settings
         print self.__elite_settings
 
-def install_etherpad():
-    pass	
+class ViewController(object):
+    
+    _cp_config = {
+        'auth.require': [valid_user()]
+    }
+        
+    @cherrypy.expose    
+    def index(self):
+        return """Member only area: %s""" % cherrypy.request.login
 
-def setup():
-    """1. Check if etherpad exists, if not prompt user	
-	   2. Edit settings file for etherpad
-	   3. Roll with it!"""
-    if not os.path.exists('etherpad-lite'):
-        install_etherpad()
+class RootController(object):
+    
+    _cp_config = {'tools.sessions.on': True, 'tools.auth.on': True}
+    
+    auth = AuthController()
+    view = ViewController()
+    
+    @cherrypy.expose
+    def index(self):
+        return """Welcome!"""
 
 def main():
-    rtfn = RTFn()
-    rtfn.read_settings()
-    rtfn.print_settings()
-    #from auth import *
-    from rlite.db import DB
     db = DB()
-    db.create_tables()
+    rtfn = RTFn(db)
+    
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    #cherrypy.root = Root
+    #cherrypy.config.update({'server.environment': 'development', 'server.socketPort': 9000})
+    cherrypy.quickstart(RootController())
+    #cherrypy.server.start()
+
 
 if __name__ == '__main__':
     #sys.path.append('.')
