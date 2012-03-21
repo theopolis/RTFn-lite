@@ -6,7 +6,7 @@
 
 import cherrypy
 
-SESSION_KEY = '_rtfn_username'
+SESSION_KEY = '_rtfn_u'
 
 def check_auth(*args, **kwargs):
     """A tool that looks in config for 'auth.require'. If found and it
@@ -67,14 +67,22 @@ def valid_user():
 
 class AuthController(object):
     
+    def __init__(self, caller):
+        self.caller = caller
+    
     def check_credentials(self, username, key):
         """Verifies credentials for username and password.
         Returns None on success or a string describing the error on failure"""
         # Adapt to your needs
-        if username in ('joe', 'steve') and key == 'secret':
-            return None
-        else:
-            return u"Incorrect username or password."
+        c_id = self.caller.db.get_competition_from_key(key)
+        if c_id is None:
+            return "Invalid competition key..."
+        u_id = self.caller.db.get_user(username)
+        if u_id is None:
+            u_id = self.caller.db.create_user(username)
+        if not self.caller.db.user_in_competition(u_id[0], c_id[0]):
+            self.caller.db.add_user_competition(u_id[0], c_id[0])
+        return False
     # An example implementation which uses an ORM could be:
     # u = User.get(username)
     # if u is None:
@@ -88,22 +96,51 @@ class AuthController(object):
     def on_logout(self, username):
         """Called on logout"""
     
-    def get_loginform(self, username, msg="Enter login information", from_page="/"):
-        return """<html><body>
+    def get_loginform(self, username, msg="Enter login/registration information", from_page="/"):
+        page = "<html><head>"
+        if not self.caller.header == None:
+            page += self.caller.header
+        page += """</head><body onload="javascript:login_form();">
+        <div id="login-warning">
+            Please login
+        </div>
+        <div id="login-modal">
             <form method="post" action="/auth/login">
             <input type="hidden" name="from_page" value="%(from_page)s" />
-            %(msg)s<br />
-            Username: <input type="text" name="username" value="%(username)s" /><br />
-            Password: <input type="password" name="password" /><br />
-            <input type="submit" value="Log in" />
-        </body></html>""" % locals()
+            <div>%(msg)s</div>
+            <div id="login-type">
+                <div>Username:</div>
+                <div id="password-type">Key:</div>
+                <!--<div id="register-type">Confirm:</div>-->
+            </div>
+            <div id="login-box">
+                <div><input type="text" name="username" value="%(username)s" /></div>
+                <div id="password-box"><input type="text" name="key" /></div>
+                <!--<div id="register-box"><input type="password" name="key" /></div>-->
+            </div>
+            <div id="login-button"><input type="submit" value="Log in" /> <!--or <input class="flip" type="button" value="Register" /></div>-->
+            <!--<div id="register-button"><input type="submit" value="Register" /> or <input type="button" class="flip" value="Log in" /></div>-->
+            </form>
+        </div>
+        """ % locals()
+        if not self.caller.footer == None:
+            page += self.caller.footer
+        return page + "</body></html>"
+    
+    '''def get_loginform(self, username, msg="Enter login information", from_page="/"):'''
+        
     
     @cherrypy.expose
-    def login(self, username=None, password=None, from_page="/"):
-        if username is None or password is None:
+    def login(self, username=None, key=None, from_page="/"):          
+        if username is None or key is None:
             return self.get_loginform("", from_page=from_page)
         
-        error_msg = self.check_credentials(username, password)
+        ''''if key is not None:
+            result = self.caller.db.get_competition_from_key(key)
+            if result is None:
+                error_msg = "Invalid registration key..."'''
+
+        error_msg = self.check_credentials(username, key)
         if error_msg:
             return self.get_loginform(username, error_msg, from_page)
         else:

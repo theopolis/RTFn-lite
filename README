@@ -30,3 +30,14 @@ Navigate to http://"your host ip":9000
 RLITE
 
 $ python ./rlite.py
+
+TODO
+
+- Add two main threads
+	-- Webserver thread
+	-- Interactive competition creation
+- User area, display competition access
+- Remove 'admin' status
+- Add python->etherpad-lite API calls
+- UI for displaying challenges from rlite-simple
+- File uploads

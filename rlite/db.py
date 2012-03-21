@@ -15,7 +15,7 @@ class DB(object):
             return
         if not os.path.exists("var/rtfn.db"):
             self.create_tables()
-        self.__link = lite.connect("var/rtfn.db")
+        self.__link = lite.connect("var/rtfn.db", check_same_thread=False)
         self.__cur = self.__link.cursor()
         pass 
     
@@ -47,16 +47,18 @@ class DB(object):
     def create_user(self, user):
         self.connect()
         self.__cur.execute("insert into users (`name`) values (?)", (user,))
+        return [self.__cur.lastrowid]
         pass
     
     def create_competition(self, name, key):
         self.connect()
         self.__cur.execute("insert into competitions (`name`, `key`) values(?, ?)", (name, key))
+        return [self.__cur.lastrowid]
         pass
     
     def user_in_competition(self, user, competition):
         self.connect()
-        result = self.__cur.execute("select users.u_id from users, competitons, user_competition \
+        result = self.__cur.execute("select users.u_id from users, competitions, user_competition \
             where users.u_id=user_competition.u_id and competitions.c_id=user_competition.c_id and users.name=? and competitions.name=?", (user, competition))
         if not result.fetchone() == None:
             return True
@@ -88,7 +90,7 @@ class DB(object):
     
     def get_competition_from_key(self, key):
         self.connect()
-        result = self.__cur.execute("select c_id, key from competition where key=?", (key,))
+        result = self.__cur.execute("select c_id, key from competitions where key=?", (key,))
         return result.fetchone()
     
     def make_admin(self, user):
@@ -100,5 +102,5 @@ class DB(object):
         pass
     
     def is_admin(self, user):
-        result = self.__cur.execute("select u_id from users where user=? and status>0", (user,))
+        result = self.__cur.execute("select u_id from users where name=? and status>0", (user,))
         return not result.fetchone() == None
