@@ -4,12 +4,14 @@
   "password": "change_admin_password",
 
   "etherpad-dir": "etherpad-lite",
+  "etherpad-url": "http://127.0.0.1/ep",
   "etherpad": {
     "port" : 9001,
     "dbType" : "dirty",
     "dbSettings" : {
       "filename" : "../var/dirty.db"
     },
+    "requireSession" : true,
     "dbType1" : "mysql",
     "dbSettings1" : {
       "user"    : "root", 

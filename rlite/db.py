@@ -1,9 +1,10 @@
 import sqlite3 as lite
-import os
+import os, time
 
 class DB(object):
     __link = None
-    def __init__(self):
+    def __init__(self, elite):
+        self.elite = elite
         self.connect()
         
     def __exit__(self):
@@ -19,6 +20,9 @@ class DB(object):
         self.__cur = self.__link.cursor()
         pass 
     
+    def commit(self):
+        self.__link.commit()
+    
     def create_tables(self):
         link = lite.connect("var/rtfn.db")
         cur = link.cursor()
@@ -26,7 +30,7 @@ class DB(object):
             c_id INTEGER Primary Key, \
             name TEXT unique, \
             key TEXT NOT NULL unique, \
-            state DATETIME Default CURRENT_TIMESTAMP, \
+            start DATETIME Default CURRENT_TIMESTAMP, \
             end DATETIME Default CURRENT_TIMESTAMP \
         ) ")
         cur.execute("create table IF NOT EXISTS users( \
@@ -41,45 +45,53 @@ class DB(object):
             FOREIGN KEY(c_id) REFERENCES competitions(c_id), \
             FOREIGN KEY(u_id) REFERENCES users(u_id) \
         )")
+        link.commit()
         link.close()
         pass
      
     def create_user(self, user):
         self.connect()
         self.__cur.execute("insert into users (`name`) values (?)", (user,))
+        self.elite.createAuthorIfNotExistsFor(user, name=user)
+        self.commit()
         return [self.__cur.lastrowid]
         pass
     
     def create_competition(self, name, key):
         self.connect()
         self.__cur.execute("insert into competitions (`name`, `key`) values(?, ?)", (name, key))
+        self.elite.createGroupIfNotExistsFor(key)
+        self.commit()
         return [self.__cur.lastrowid]
         pass
     
-    def user_in_competition(self, user, competition):
+    def user_in_competition(self, user, key):
         self.connect()
         result = self.__cur.execute("select users.u_id from users, competitions, user_competition \
-            where users.u_id=user_competition.u_id and competitions.c_id=user_competition.c_id and users.name=? and competitions.name=?", (user, competition))
+            where users.u_id=user_competition.u_id and competitions.c_id=user_competition.c_id and users.name=? and competitions.key=?", (user, key))
         if not result.fetchone() == None:
             return True
         if self.is_admin(user):
-            self.add_user_competition(user, competition)
+            self.add_user_competition(user, key)
             return True
         return False
         pass
     
-    def add_user_competition(self, user, competition):
+    def add_user_competition(self, user, key):
         self.connect()
-        if self.user_in_competition(user, competition) or self.get_user(user) == None or self.get_competition(competition) == None:
+        if self.user_in_competition(user, key) or self.get_user(user) == None or self.get_competition_from_key(key) == None:
             return False
         self.__cur.execute("insert into user_competition (`c_id`, `u_id`) select u_id, c_id \
             from users, competitions \
-            where users.name=? and competitions.name=?", (user, competition))
+            where users.name=? and competitions.key=?", (user, key))
+        self.elite.createGroupIfNotExistsFor(key)
+        self.commit()
         return True
     
     def get_user(self, user):
         self.connect()
         result = self.__cur.execute("select u_id, status from users where name=?", (user,))
+        self.elite.createAuthorIfNotExistsFor(user)
         return result.fetchone()
     
     def get_competition(self, competition):
@@ -91,6 +103,7 @@ class DB(object):
     def get_competition_from_key(self, key):
         self.connect()
         result = self.__cur.execute("select c_id, key from competitions where key=?", (key,))
+        self.elite.createGroupIfNotExistsFor(key)
         return result.fetchone()
     
     def make_admin(self, user):
@@ -98,6 +111,7 @@ class DB(object):
         if self.get_user(user) == None:
             return False
         self.__cur.execute("update users set status=1 where name=?", (user,))
+        self.commit()
         return True
         pass
     

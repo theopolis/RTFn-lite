@@ -5,13 +5,21 @@ def error(s):
     exit(1)
 
 class rLite(object):
-    def __init__(self, db):
-        self.db = db
+    MANDATORY = {
+        "defaultPadText" : "",
+        "requireSession" : "true",
+        "editOnly" : "false",
+        "minify" : "true",
+        "abiword" : "null",
+        #"httpAuth" : "",
+        "loglevel": "WARN"
+    }     
+    def __init__(self):
         self.read_settings()
         
     def read_settings(self):
-        global MANDATORY
         settings = {}
+        
         """We use the same json-type configuration file as etherpad-lite"""
         if not os.path.exists("settings.json"):
             error("Cannot find settings.json")
@@ -27,28 +35,32 @@ class rLite(object):
                 error("Cannot find settings.json or settings.json.template in etherpad-dir: %s" % self.__settings["etherpad-dir"])
             try:
                 #elite_settings = json.load(open("%s/settings.json.template" % self.__settings["etherpad-dir"], 'r'))
-                elite_settings = MANDATORY
+                elite_settings = self.MANDATORY
                 for key, value in self.__settings["etherpad"].items():
                     elite_settings[key] = value
-                json.dump(elite_settings, open("%s/settings.json" % self.__settings["etherpad-dir"], 'w'))
+                json.dump(elite_settings, open(os.path.join(self.__settings["etherpad-dir"], "settings.json"), 'w'))
             except Exception as e:
                 error("Cannot parse/save etherpad settings: %s" % e)
         else:
-            elite_settings = json.load(open("%s/settings.json" % self.__settings["etherpad-dir"], 'r'))
+            print os.path.join(self.__settings["etherpad-dir"], "settings.json")
+            elite_settings = {}
+            try:
+                elite_settings = json.load(open(os.path.join(self.__settings["etherpad-dir"], "settings.json"), 'r'))
+            except:
+                pass
         del self.__settings["etherpad"]
         self.__elite_settings = elite_settings
         
-    def create_pad(self, group):
-        pass
+    def api_key(self):
+        """Read and return the etherpad lite API key"""
+        api_name = os.path.join(self.__settings["etherpad-dir"], "APIKEY.txt")
+        if not os.path.exists(api_name):
+            return False
+        api_fp = os.open(api_name, os.O_RDONLY)
+        return os.read(api_fp, 128)
     
-    def create_user(self):
-        pass
-    
-    def create_competition(self, name, key):
-        pass
-    
-    def add_user_group(self):
-        pass
+    def get(self, setting):
+        return self.__settings[setting] if setting in self.__settings.keys() else None
 
     def print_settings(self):
         print self.__settings

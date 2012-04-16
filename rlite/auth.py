@@ -5,6 +5,7 @@
 #
 
 import cherrypy
+import time
 
 SESSION_KEY = '_rtfn_u'
 
@@ -26,77 +27,45 @@ def check_auth(*args, **kwargs):
     
 cherrypy.tools.auth = cherrypy.Tool('before_handler', check_auth)
 
-def require(*conditions):
-    """A decorator that appends conditions to the auth.require config
-    variable."""
-    def decorate(f):
-        if not hasattr(f, '_cp_config'):
-            f._cp_config = dict()
-        if 'auth.require' not in f._cp_config:
-            f._cp_config['auth.require'] = []
-        f._cp_config['auth.require'].extend(conditions)
-        return f
-    return decorate
-
-# These might be handy
-
-def any_of(*conditions):
-    """Returns True if any of the conditions match"""
-    def check():
-        for c in conditions:
-            if c():
-                return True
-        return False
-    return check
-
-# By default all conditions are required, but this might still be
-# needed if you want to use it inside of an any_of(...) condition
-def all_of(*conditions):
-    """Returns True if all of the conditions match"""
-    def check():
-        for c in conditions:
-            if not c():
-                return False
-        return True
-    return check
-
 def valid_user():
     return lambda: not cherrypy.request.login == None
 
 # Controller to provide login and logout actions
-
 class AuthController(object):
     
     def __init__(self, caller):
         self.caller = caller
     
     def check_credentials(self, username, key):
-        """Verifies credentials for username and password.
-        Returns None on success or a string describing the error on failure"""
-        # Adapt to your needs
+        """
+        Authentication is done by key, if the key is valid, create an entry in the users table.
+        This does not authenticate a returning user to their entry.
+        
+        username - Selected by the user, this is what they would like to be called while editing.
+        key      - must match a competition key, and must be active.
+        """
         c_id = self.caller.db.get_competition_from_key(key)
         if c_id is None:
-            return "Invalid competition key..."
+            return {"error": "Invalid competition key..."}
         u_id = self.caller.db.get_user(username)
         if u_id is None:
             u_id = self.caller.db.create_user(username)
-        if not self.caller.db.user_in_competition(u_id[0], c_id[0]):
-            self.caller.db.add_user_competition(u_id[0], c_id[0])
-        return False
-    # An example implementation which uses an ORM could be:
-    # u = User.get(username)
-    # if u is None:
-    #     return u"Username %s is unknown to me." % username
-    # if u.password != md5.new(password).hexdigest():
-    #     return u"Incorrect password"
+        if not self.caller.db.user_in_competition(username, key):
+            self.caller.db.add_user_competition(username, key)
+        admin = self.caller.db.is_admin(username)
+        return {"admin": admin, "error": None}
     
-    def on_login(self, username):
+    def on_login(self, username, key):
         """Called on successful login"""
+        # Set etherpad lite's sessionID cookie
+        session_response = self.caller.elite.createSession(key, username, int(time.time())+7800)
+        if session_response["message"] == "ok":
+            cherrypy.response.cookie["sessionID"] = session_response["data"]["sessionID"]
     
     def on_logout(self, username):
         """Called on logout"""
     
-    def get_loginform(self, username, msg="Enter login/registration information", from_page="/"):
+    def get_loginform(self, username, msg="Enter login/registration information", from_page="/view"):
         page = "<html><head>"
         if not self.caller.header == None:
             page += self.caller.header
@@ -106,7 +75,7 @@ class AuthController(object):
         </div>
         <div id="login-modal">
             <form method="post" action="/auth/login">
-            <input type="hidden" name="from_page" value="%(from_page)s" />
+            <input type="hidden" name="from_page" value="/view" />
             <div>%(msg)s</div>
             <div id="login-type">
                 <div>Username:</div>
@@ -134,18 +103,13 @@ class AuthController(object):
     def login(self, username=None, key=None, from_page="/"):          
         if username is None or key is None:
             return self.get_loginform("", from_page=from_page)
-        
-        ''''if key is not None:
-            result = self.caller.db.get_competition_from_key(key)
-            if result is None:
-                error_msg = "Invalid registration key..."'''
 
-        error_msg = self.check_credentials(username, key)
-        if error_msg:
-            return self.get_loginform(username, error_msg, from_page)
+        creds = self.check_credentials(username, key)
+        if creds["error"] is not None:
+            return self.get_loginform(username, creds["error"], from_page)
         else:
-            cherrypy.session[SESSION_KEY] = cherrypy.request.login = username
-            self.on_login(username)
+            cherrypy.session[SESSION_KEY] = cherrypy.request.login = {"username": username, "key": key, "admin": creds["admin"]}
+            self.on_login(username, key)
             raise cherrypy.HTTPRedirect(from_page or "/")
     
     @cherrypy.expose

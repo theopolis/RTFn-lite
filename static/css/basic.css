@@ -12,10 +12,16 @@
  */
 
 #login-modal{display:none;}
-#login-warning{text-align:center; font-size:4em; padding-top:50%; font-weight: bold}
+#login-warning{text-align:center; font-size:4em; padding-top:25%; font-weight: bold}
 #login-type{float:left;}
 #login-box{float:left;}
 #login-button, #register-button{clear:both}
+
+a, a:hover, a:visited { text-decoration: none; color: blue; font-weight: bold; }
+.topbar {width:100%; height:20px; padding:3px; margin-bottom:10px; background-color:black;color:white;}
+.topbar a, .topbar a:hover, .topbar a:visited { color: white;}
+.box { background-color: grey; border: 2px solid black; max-width: 300px; float: left; padding: 5px; margin:3px; color:white; }
+.box:hover {background-color:black;}
 
 #register-type{display:none}
 #register-box{display:none}
