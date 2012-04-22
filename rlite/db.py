@@ -52,17 +52,17 @@ class DB(object):
     def create_user(self, user):
         self.connect()
         self.__cur.execute("insert into users (`name`) values (?)", (user,))
-        self.elite.createAuthorIfNotExistsFor(user, name=user)
+        uid= self.elite.createAuthorIfNotExistsFor(user, name=user)
         self.commit()
-        return [self.__cur.lastrowid]
+        return {"db": [self.__cur.lastrowid], "uid": uid["data"]["authorID"] if uid is not None else None}
         pass
     
     def create_competition(self, name, key):
         self.connect()
         self.__cur.execute("insert into competitions (`name`, `key`) values(?, ?)", (name, key))
-        self.elite.createGroupIfNotExistsFor(key)
+        gid= self.elite.createGroupIfNotExistsFor(key)
         self.commit()
-        return [self.__cur.lastrowid]
+        return {"db": [self.__cur.lastrowid], "gid": gid["data"]["groupID"] if gid is not None else None}
         pass
     
     def user_in_competition(self, user, key):
@@ -84,15 +84,15 @@ class DB(object):
         self.__cur.execute("insert into user_competition (`c_id`, `u_id`) select u_id, c_id \
             from users, competitions \
             where users.name=? and competitions.key=?", (user, key))
-        self.elite.createGroupIfNotExistsFor(key)
+        #self.elite.createGroupIfNotExistsFor(key)
         self.commit()
         return True
     
     def get_user(self, user):
         self.connect()
         result = self.__cur.execute("select u_id, status from users where name=?", (user,))
-        self.elite.createAuthorIfNotExistsFor(user)
-        return result.fetchone()
+        uid = self.elite.createAuthorIfNotExistsFor(user)
+        return {"db": result.fetchone(), "uid": uid["data"]["authorID"] if uid is not None else None}
     
     def get_competition(self, competition):
         self.connect()
@@ -102,9 +102,9 @@ class DB(object):
     
     def get_competition_from_key(self, key):
         self.connect()
-        result = self.__cur.execute("select c_id, key from competitions where key=?", (key,))
-        self.elite.createGroupIfNotExistsFor(key)
-        return result.fetchone()
+        result = self.__cur.execute("select c_id, name, key from competitions where key=?", (key,))
+        gid= self.elite.createGroupIfNotExistsFor(key)
+        return {"db": result.fetchone(), "gid": gid["data"]["groupID"] if gid is not None else None}
     
     def make_admin(self, user):
         self.connect()

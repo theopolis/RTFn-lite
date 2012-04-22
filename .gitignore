@@ -2,6 +2,7 @@
 .*project*
 .settings
 *.pyc
+static/uploads
 var/*
 settings.json
 etherpad-lite

@@ -11,17 +11,30 @@
  * Revision: $Id: basic.css 257 2010-07-27 23:06:56Z emartin24 $
  */
 
-#login-modal{display:none;}
+#login-modal, #create-modal, #delete-modal, #upload-modal, #files-modal{display:none;}
+#create-challenge, #upload-file, #show-files {cursor:pointer;}
 #login-warning{text-align:center; font-size:4em; padding-top:25%; font-weight: bold}
 #login-type{float:left;}
 #login-box{float:left;}
 #login-button, #register-button{clear:both}
 
+#files-frame {width:100%; height:100%}
+
 a, a:hover, a:visited { text-decoration: none; color: blue; font-weight: bold; }
 .topbar {width:100%; height:20px; padding:3px; margin-bottom:10px; background-color:black;color:white;}
 .topbar a, .topbar a:hover, .topbar a:visited { color: white;}
-.box { background-color: grey; border: 2px solid black; max-width: 300px; float: left; padding: 5px; margin:3px; color:white; }
+
+.box { background-color: lightgrey; border: 2px solid black; max-width: 300px; float: left; padding: 10px; margin:10px; color:white; position: relative; }
+.box .delete, .box .move, .box .solve {width:30px; height:30px; position:absolute; display:inline; cursor:pointer;}
+.box .delete {background:url(../img/x.png) no-repeat; right:-18px;}
+.box .move {background:url(../img/m.png) no-repeat; left:-12px; top:-12px; display:none;}
+.box .solve {background:url(../img/s.png) no-repeat; left:-12px;}
+
+
 .box:hover {background-color:black;}
+.topbar .main{float:left;}
+.topbar .actions{float:right; margin-right:10px;}
+.topbar .clear{clear:both}
 
 #register-type{display:none}
 #register-box{display:none}

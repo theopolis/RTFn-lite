@@ -44,26 +44,36 @@ class AuthController(object):
         username - Selected by the user, this is what they would like to be called while editing.
         key      - must match a competition key, and must be active.
         """
-        c_id = self.caller.db.get_competition_from_key(key)
-        if c_id is None:
+        c_data = self.caller.db.get_competition_from_key(key)
+        if c_data["db"] is None:
             return {"error": "Invalid competition key..."}
-        u_id = self.caller.db.get_user(username)
-        if u_id is None:
-            u_id = self.caller.db.create_user(username)
+        """If a user does not yet exist, create one"""
+        u_data = self.caller.db.get_user(username)
+        if u_data["db"] is None:
+            u_data = self.caller.db.create_user(username)
+        """If they are not yet part of this competition, add them"""
         if not self.caller.db.user_in_competition(username, key):
             self.caller.db.add_user_competition(username, key)
         admin = self.caller.db.is_admin(username)
-        return {"admin": admin, "error": None}
+        """Send c_data and u_data because they contain e-lite authorID, groupID"""
+        return {"admin": admin, "error": None, "c_data": c_data, "u_data": u_data}
     
-    def on_login(self, username, key):
+    def on_login(self, username, key, creds):
         """Called on successful login"""
         # Set etherpad lite's sessionID cookie
-        session_response = self.caller.elite.createSession(key, username, int(time.time())+7800)
-        if session_response["message"] == "ok":
-            cherrypy.response.cookie["sessionID"] = session_response["data"]["sessionID"]
+        """Send both canonical username/key for display and e-lite authorID, groupID"""
+        session_response = self.caller.elite.createSession(creds["c_data"]["gid"], creds["u_data"]["uid"], int(time.time())+7800)
+        cherrypy.session[SESSION_KEY] = cherrypy.request.login = {
+            "user":  (username, creds["u_data"]["uid"]), 
+            "comp":   (creds["c_data"]["db"][1], creds["c_data"]["gid"]), 
+            "admin": creds["admin"],
+            "sessionID": session_response["data"]["sessionID"] if session_response["data"] is not None else ""
+        }
     
     def on_logout(self, username):
         """Called on logout"""
+        if 'sessionID' in cherrypy.response.cookie:
+            cherrypy.response.cookie['sessionID']['expires'] = 0
     
     def get_loginform(self, username, msg="Enter login/registration information", from_page="/view"):
         page = "<html><head>"
@@ -91,7 +101,7 @@ class AuthController(object):
             <!--<div id="register-button"><input type="submit" value="Register" /> or <input type="button" class="flip" value="Log in" /></div>-->
             </form>
         </div>
-        """ % locals()
+        """ % {"username": username, "msg": msg}
         if not self.caller.footer == None:
             page += self.caller.footer
         return page + "</body></html>"
@@ -100,16 +110,22 @@ class AuthController(object):
         
     
     @cherrypy.expose
-    def login(self, username=None, key=None, from_page="/"):          
+    def login(self, username=None, key=None, from_page="/"):   
+        import re
+        """Make sure data was entered"""
         if username is None or key is None:
             return self.get_loginform("", from_page=from_page)
-
+        """Make sure it was alpha-numeric"""
+        check= re.compile("^[\w-]+$")
+        if check.match(username) is None or check.match(key) is None:
+            return self.get_loginform("", msg="Invalid characters in username or key", from_page=from_page)
+        """Check the data they entered, at this time, just a valid key"""
         creds = self.check_credentials(username, key)
         if creds["error"] is not None:
             return self.get_loginform(username, creds["error"], from_page)
         else:
-            cherrypy.session[SESSION_KEY] = cherrypy.request.login = {"username": username, "key": key, "admin": creds["admin"]}
-            self.on_login(username, key)
+            """Will set the cookie"""
+            self.on_login(username, key, creds)
             raise cherrypy.HTTPRedirect(from_page or "/")
     
     @cherrypy.expose
