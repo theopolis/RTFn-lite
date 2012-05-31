@@ -1,33 +1,35 @@
 INSTALL / RUN
 
+Download Etherpad-lite (as a submodule?):
+$ git submodule init
+$ git submodule update
+
+Optional!!! Instead of using the submodule:
 Download Etherpad-lite to a directory that RTFn will have read/write access:
 $ git clone https://github.com/Pita/etherpad-lite.git etherpad-lite
 
-Install Python/Cherrypy, e.g.:
-$ apt-get install python-cherrypy 
+Install Python/Cherrypy (>3.2.0), e.g.:
+$ apt-get install python-cherrypy3 
 
 Configure settings.json (copy settings.json.template to settings.json), 
 by default you only need to change the "password" setting.
 
-Then use RLITE or RLITE-SIMPLE
+1. Create your first RTFn-lite competition, this will setup the database
+and copy settings from RTFn-lite to Etherpad-Lite.
 
-RLITE-SIMPLE
+$ python ./rlite.py --add <competition name> --key <access key>
 
-rLite Simple is a very basic layout for your pads. It does not use the Etherpad
-Lite API, but instead just scrapes the dirty DB flat file, while maintaining its
-own dirty DB for naming/labeling. 
+2. Follow the directions to install Etherpad-Lite's dependencies.
+[https://github.com/Pita/etherpad-lite]
 
-Configure your HOST in ./rlite-simple.py, and the httpAuth USERNAME:PASSWORD
+3. (Optional) Install Etherpad-Lite as a service.
+[https://github.com/Pita/etherpad-lite/wiki/How-to-deploy-Etherpad-Lite-as-a-service]
 
-Copy the settings.json.simple to ./etherpad-lite/ (assuming you installed Etherpad
-Lite using the INSTALL / RUN directions. Then run Etherpad Lite
+4. Setup Apache to proxy Etherpad-Lite. Right now RTFn-Lite expects 
+this configuration for SSL support. Use 127.0.0.0.1 for the host.
+[https://github.com/Pita/etherpad-lite/wiki/How-to-put-Etherpad-Lite-behind-a-reverse-Proxy]
 
-$ nohup ./etherpad-lite/bin/run.sh
-$ python ./rlite-simple.py
-
-Navigate to http://"your host ip":9000
-
-RLITE
+5. Start RTFn-Lite!
 
 $ python ./rlite.py
 
@@ -38,6 +40,3 @@ TODO
 	-- Interactive competition creation
 - User area, display competition access
 - Remove 'admin' status
-- Add python->etherpad-lite API calls
-- UI for displaying challenges from rlite-simple
-- File uploads

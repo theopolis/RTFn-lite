@@ -1,0 +1,3 @@
+[submodule "elite"]
+	path = elite
+	url = https://github.com/Pita/etherpad-lite.git

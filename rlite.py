@@ -4,7 +4,12 @@ from rlite.db import DB
 from rlite.auth import AuthController, valid_user
 from rlite.etherpad import EtherpadLiteClient
 
-import cherrypy
+try:
+    import cherrypy
+except ImportError:
+    print "Cannot import 'cherrypy', did you install CherryPy3 > 3.1?"
+    sys.exit(1)
+#Todo: add check for cherrypy.tools
 
 class ViewController(object):    
     _cp_config = {
@@ -236,7 +241,7 @@ class RootController(object):
             RTFn-lite (<a href="/view">Go!</a>)
         </div>""" + self.footer
 
-def main():
+def main(args):
     # Read settings used by etherpad client
     rtfn = rLite()
     
@@ -249,11 +254,14 @@ def main():
     # rLite's DB management hooks etherpad lite API calls
     db = DB(elite)
     
+    if args.add is not None and args.key is not None:
+        print "Adding competition {0} with key {1}.".format(args.add, args.key)
+        db.create_competition(args.add, args.key, add_elite=False)
+        sys.exit(0)
+    
     # Start web interface
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    #cherrypy.root = Root
     config = {"/static": {
-        #'server.environment': 'development', 
         'tools.staticdir.on': True,
         'tools.staticdir.dir': current_dir + "/static"
 
@@ -263,5 +271,15 @@ def main():
     cherrypy.quickstart(RootController(db, rtfn, elite), "/", config=config)
 
 if __name__ == '__main__':
-    #sys.path.append('.')
-    main()
+    try:
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--add', default=None, help='Add a new competition then quit, must specify a --key for the competition.')
+        parser.add_argument('--key', default=None, help='Used with -add, to set the competition key.')
+        args = parser.parse_args()
+    except ImportError:
+        class ArgumentParser(object):
+            add = None
+            key = None
+        args = ArgumentParser()
+    main(args)

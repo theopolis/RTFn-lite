@@ -57,11 +57,13 @@ class DB(object):
         return {"db": [self.__cur.lastrowid], "uid": uid["data"]["authorID"] if uid is not None else None}
         pass
     
-    def create_competition(self, name, key):
+    def create_competition(self, name, key, add_elite=True):
         self.connect()
         self.__cur.execute("insert into competitions (`name`, `key`) values(?, ?)", (name, key))
-        gid= self.elite.createGroupIfNotExistsFor(key)
         self.commit()
+        if not add_elite:
+            return True
+        gid= self.elite.createGroupIfNotExistsFor(key)
         return {"db": [self.__cur.lastrowid], "gid": gid["data"]["groupID"] if gid is not None else None}
         pass
     
