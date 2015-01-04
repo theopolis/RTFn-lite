@@ -27,8 +27,7 @@ By default you only need to change the "`password`" setting.
 $ python ./rlite.py --add <competition name> --key <access key>
     ```
 
-* Follow the directions to install Etherpad-Lite's dependencies.
-[https://github.com/ether/etherpad-lite]
+* [Follow the directions to install Etherpad-Lite's dependencies](https://github.com/ether/etherpad-lite).
 
 * _(Optional)_ [Install Etherpad-Lite as a service](https://github.com/ether/etherpad-lite/wiki/How-to-deploy-Etherpad-Lite-as-a-service).
 
