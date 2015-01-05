@@ -10,7 +10,7 @@ $ git submodule update
 * __Or__ instead of using the submodule, download Etherpad-lite to a directory that RTFn will have read/write access:
 
     ```bash
-$ git clone https://github.com/Pita/etherpad-lite.git etherpad-lite
+$ git clone https://github.com/ether/etherpad-lite.git etherpad-lite
     ```
 
 * Install Python/Cherrypy (>3.2.0), e.g.:
