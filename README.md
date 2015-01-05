@@ -19,7 +19,7 @@ $ apt-get install python-cherrypy3
     ```
 or
 	```bash
-$ pip install CherryPy
+$ pip install "CherryPy>=3.2.0"
 	```
 
 * Configure `settings.json` (copy [`settings.json.template`](https://github.com/theopolis/RTFn-lite/blob/master/settings.json.template) to `settings.json`). 
