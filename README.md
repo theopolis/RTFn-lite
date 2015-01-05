@@ -17,6 +17,10 @@ $ git clone https://github.com/ether/etherpad-lite.git etherpad-lite
     ```bash
 $ apt-get install python-cherrypy3 
     ```
+or
+	```bash
+$ pip install CherryPy
+	```
 
 * Configure `settings.json` (copy [`settings.json.template`](https://github.com/theopolis/RTFn-lite/blob/master/settings.json.template) to `settings.json`). 
 By default you only need to change the "`password`" setting.
